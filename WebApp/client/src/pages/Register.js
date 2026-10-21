@@ -34,11 +34,41 @@ export default function Register() {
 
   async function sendRegInfo(e) {
     e.preventDefault();
-    setErrorMsg(""); setSuccessMsg("");
+    setErrorMsg(""); 
+    setSuccessMsg("");
+    
     const missing = missingField();
     if (missing) return setErrorMsg(`${fieldLabel(missing)} is required.`);
-    setSuccessMsg("Registration successful!");
-    setTimeout(() => window.location.href = "/login", 1300);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Name: fields.name,
+          Email: fields.email,
+          Phone: fields.phnNumber,   // FIX: Changed from PhoneNumber to exactly "Phone"
+          District: fields.district,
+          Address: fields.address,
+          Password: fields.pass
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // This will catch the exact error your backend sends back
+        setErrorMsg(data.error || data.message || "Registration failed.");
+        return;
+      }
+
+      setSuccessMsg("Registration successful!");
+      setTimeout(() => window.location.href = "/login", 1300);
+      
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Server error. Please try again later.");
+    }
   }
 
   return (
@@ -67,6 +97,7 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.name && !fields.name && <div className="register-error">Full Name is required.</div>}
+            
             <input
               className="register-input"
               name="email"
@@ -77,6 +108,7 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.email && !fields.email && <div className="register-error">Email is required.</div>}
+            
             <input
               className="register-input"
               name="phnNumber"
@@ -86,6 +118,7 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.phnNumber && !fields.phnNumber && <div className="register-error">Phone number is required.</div>}
+            
             <input
               className="register-input"
               name="district"
@@ -95,6 +128,7 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.district && !fields.district && <div className="register-error">District is required.</div>}
+            
             <input
               className="register-input"
               name="address"
@@ -104,6 +138,7 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.address && !fields.address && <div className="register-error">Address is required.</div>}
+            
             <input
               className="register-input"
               name="pass"
@@ -114,8 +149,10 @@ export default function Register() {
               onBlur={handleBlur}
             />
             {touched.pass && !fields.pass && <div className="register-error">Password is required.</div>}
-            {errorMsg && <div className="register-error">{errorMsg}</div>}
-            {successMsg && <div className="register-success">{successMsg}</div>}
+            
+            {errorMsg && <div className="register-error" style={{color: "red", marginTop: "10px"}}>{errorMsg}</div>}
+            {successMsg && <div className="register-success" style={{color: "green", marginTop: "10px"}}>{successMsg}</div>}
+            
             <button type="submit" className="register-gradient-btn">Sign Up</button>
           </form>
         </div>

@@ -17,28 +17,37 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg("");
     setVerifyMsg("");
+    
     if (!email || !password) {
       setErrorMsg("Please enter both email and password.");
       return;
     }
+    
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      // Uses the proxy defined in package.json
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ Email: email, Password: password })
       });
+      
       const data = await response.json();
+      
       if (!response.ok) {
         setErrorMsg(data.error || data.message || "Login failed. Please try again.");
         return;
       }
+      
       localStorage.setItem("token", data.token);
       localStorage.setItem("userRole", data.user.UserType ? data.user.UserType.join(",") : "");
       localStorage.setItem("userName", data.user.Name || "");
       dispatch(changeRole(data.user.UserType || []));
+      
       setVerifyMsg("Login successful! Redirecting...");
       navigate("/");
+      
     } catch (err) {
+      console.error(err);
       setErrorMsg("An error occurred. Please try again.");
     }
   }
@@ -83,8 +92,8 @@ export default function Login() {
                 className="login-input"
               />
             </div>
-            {errorMsg && <div className="loginError">{errorMsg}</div>}
-            {verifyMsg && <div className="loginError" style={{ color: "green" }}>{verifyMsg}</div>}
+            {errorMsg && <div className="loginError" style={{color: "red", marginTop: "10px"}}>{errorMsg}</div>}
+            {verifyMsg && <div className="loginError" style={{ color: "green", marginTop: "10px" }}>{verifyMsg}</div>}
             <button type="submit" className="login-gradient-btn">Log In</button>
           </form>
           <div style={{ textAlign: "right", width: "100%", marginTop: "6px" }}>

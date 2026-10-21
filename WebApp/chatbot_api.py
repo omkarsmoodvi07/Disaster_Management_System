@@ -41,13 +41,31 @@ def fuzzy_emergency_lookup(query, numbers):
 
 emergency_numbers = load_emergency_numbers(EMERGENCY_FILE)
 
-embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
-service_context = ServiceContext.from_defaults(embed_model=embed_model, llm=None)
-print("Loading and indexing ALL files from:", DATA_DIR)
-documents = SimpleDirectoryReader(DATA_DIR).load_data()
-if not documents:
-    raise RuntimeError(f"No documents found in '{DATA_DIR}'. Please add PDFs or .txt files.")
-index = VectorStoreIndex.from_documents(documents, service_context=service_context)
+from llama_index.core import StorageContext, load_index_from_storage, Settings
+try:
+    Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    Settings.llm = None
+except Exception as e:
+    print("Settings initialization note:", e)
+
+STORAGE_DIR = './chatbot_storage'
+if os.path.exists(STORAGE_DIR):
+    print("Loading cached vector index from:", STORAGE_DIR)
+    storage_context = StorageContext.from_defaults(persist_dir=STORAGE_DIR)
+    index = load_index_from_storage(storage_context)
+    print("Chatbot vector index ready!")
+else:
+    print("Loading and indexing documents from:", DATA_DIR)
+    documents = SimpleDirectoryReader(DATA_DIR).load_data()
+    if not documents:
+        raise RuntimeError(f"No documents found in '{DATA_DIR}'. Please add PDFs or .txt files.")
+    try:
+        index = VectorStoreIndex.from_documents(documents)
+    except Exception:
+        service_context = ServiceContext.from_defaults(embed_model=Settings.embed_model, llm=None)
+        index = VectorStoreIndex.from_documents(documents, service_context=service_context)
+    index.storage_context.persist(persist_dir=STORAGE_DIR)
+    print("Vector index built and cached to:", STORAGE_DIR)
 
 app = FastAPI()
 app.add_middleware(

@@ -28,6 +28,7 @@ app.use('/api/auth', require('./routes/auth'));                   // login/regis
 app.use('/api/incidents', require('./routes/incident'));          // incident endpoints
 app.use('/api/donations', require('./routes/donations'));         // donations endpoints
 app.use('/api/announcements', require('./routes/Announcements')); // <<-- this must NOT be missing!
+app.use('/api/places', require('./routes/places'));               // places / navigation endpoints
 
 // Default test endpoint
 app.get('/', (req, res) => res.send('API running!'));
